@@ -1,51 +1,31 @@
-import fs from "fs/promises";
-import path from "path";
-import { nanoid } from "nanoid";
+import Contact from "../db/Contacts.js";
 
-const contactsPath = path.resolve("db", "contacts.json");
-
-const updateContacts = (contacts) =>
-  fs.writeFile(contactsPath, JSON.stringify(contacts, null, 2));
-
-export async function listContacts() {
-  const data = await fs.readFile(contactsPath);
-  return JSON.parse(data);
+export function listContacts() {
+  const contacts = Contact.findAll();
+  return contacts;
 }
 
 export async function getContactById(contactId) {
-  const contacts = await listContacts();
-  const result = contacts.find((contact) => contact.id === contactId);
-  return result || null;
+  const contact = await Contact.findByPk(contactId);
+  if (!contact) return null;
+  return contact;
 }
 
 export async function removeContact(contactId) {
-  const contacts = await listContacts();
-  const index = contacts.findIndex((contact) => contact.id === contactId);
-  if (index === -1) return null;
-  const [result] = contacts.splice(index, 1);
-  await updateContacts(contacts);
-  return result;
+  const contact = await getContactById(contactId);
+  if (!contact) return null;
+  await contact.destroy();
+  return contact;
 }
 
-export async function addContact(data) {
-  const contacts = await listContacts();
-  const newContact = {
-    id: nanoid(),
-    ...data,
-  };
-  contacts.push(newContact);
-  await updateContacts(contacts);
-  return newContact;
+export function addContact(data) {
+  const contact = Contact.create(data);
+  return contact;
 }
 
 export async function updateContactById(contactId, data) {
-  const contacts = await listContacts();
-  const index = contacts.findIndex((contact) => contact.id === contactId);
-  if (index === -1) return null;
-  contacts[index] = {
-    ...contacts[index],
-    ...data,
-  };
-  await updateContacts(contacts);
-  return contacts[index];
+  const contact = await getContactById(contactId);
+  if (!contact) return null;
+  await contact.update(data);
+  return contact;
 }
