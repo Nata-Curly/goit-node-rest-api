@@ -1,6 +1,11 @@
+import path from "path";
+import fs from "fs/promises";
+
 import * as authServices from "../services/authServices.js";
 
 import ctrlWrapper from "../helpers/ctrlWrapper.js";
+
+const avatarsDir = path.resolve("public", "avatars");
 
 const registerController = async (req, res) => {
   const newUser = await authServices.registerUser(req.body);
@@ -28,9 +33,27 @@ const getCurrentController = async (req, res) => {
   res.json({ email, subscription });
 };
 
+const updateAvatarController = async (req, res) => {
+  const { id } = req.user;
+
+  if (!req.file) throw HttpError(400, "Missing file");
+
+  const filename = req.file.filename;
+  const tempPath = req.file.path;
+  const finalPath = path.join(avatarsDir, filename);
+
+  await fs.rename(tempPath, finalPath);
+
+  const avatarURL = `/avatars/${filename}`;
+  await authServices.updateAvatar({ id, avatarURL });
+
+  res.status(200).json({ avatarURL });
+};
+
 export default {
   registerController: ctrlWrapper(registerController),
   loginController: ctrlWrapper(loginController),
   logoutController: ctrlWrapper(logoutController),
   getCurrentController: ctrlWrapper(getCurrentController),
+  updateAvatarController: ctrlWrapper(updateAvatarController),
 };
