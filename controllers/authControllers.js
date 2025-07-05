@@ -14,7 +14,7 @@ const registerController = async (req, res) => {
 const loginController = async (req, res) => {
   const token = await authServices.loginUser(req.body);
 
-  res.json({ token });
+  res.json(token);
 };
 
 const logoutController = async (req, res) => {
