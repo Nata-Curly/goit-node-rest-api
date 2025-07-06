@@ -1,14 +1,19 @@
 import bcrypt from "bcrypt";
+import gravatar from "gravatar";
 
 import User from "../db/User.js";
 import HttpError from "../helpers/HttpError.js";
 import { createToken } from "../helpers/jwt.js";
-// import { use } from "react";
 
 export const findUser = (query) => User.findOne({ where: query });
 
 export const registerUser = async (payload) => {
   const hashPassword = await bcrypt.hash(payload.password, 10);
+  payload.avatarURL = gravatar.url(
+    payload.email,
+    { s: "250", r: "pg", d: "mm" },
+    true
+  );
   return User.create({ ...payload, password: hashPassword });
 };
 
@@ -41,3 +46,6 @@ export const logoutUser = async ({ email }) => {
   user.token = null;
   await user.save();
 };
+
+export const updateAvatar = async ({ id, avatarURL }) =>
+  User.update({ avatarURL }, { where: { id } });
